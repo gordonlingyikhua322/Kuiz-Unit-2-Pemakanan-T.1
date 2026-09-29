@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuiz Unit 2: Pemakanan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Fredoka', sans-serif;
+        }
+        .kahoot-red { background-color: #e21b3c; }
+        .kahoot-blue { background-color: #1368ce; }
+        .kahoot-yellow { background-color: #d89e00; }
+        .kahoot-green { background-color: #26890c; }
+        
+        .kahoot-red:hover { background-color: #c0132f; }
+        .kahoot-blue:hover { background-color: #0f52a5; }
+        .kahoot-yellow:hover { background-color: #b08100; }
+        .kahoot-green:hover { background-color: #1e6d09; }
+
+        .animate-bounce-short {
+            animation: bounce 0.5s ease infinite alternate;
+        }
+        @keyframes bounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body class="bg-purple-900 min-h-screen text-white flex flex-col justify-between">
+
+    <!-- Header -->
+    <header class="p-4 bg-purple-950 flex justify-between items-center shadow-lg border-b-4 border-purple-700">
+        <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-utensils text-yellow-400 text-2xl"></i>
+            <h1 class="text-xl md:text-2xl font-bold tracking-wide">Kuiz Unit 2: Pemakanan</h1>
+        </div>
+        <div id="score-display" class="hidden bg-purple-800 px-4 py-2 rounded-full border-2 border-yellow-400 text-yellow-300 font-bold">
+            Mata: <span id="current-score">0</span>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow flex items-center justify-center p-4">
+        
+        <!-- Start Screen -->
+        <div id="start-screen" class="bg-purple-800 p-8 rounded-2xl shadow-2xl max-w-xl w-full text-center border-4 border-purple-600">
+            <div class="text-6xl mb-4 animate-bounce-short">🥗🍎🥦</div>
+            <h2 class="text-3xl font-bold mb-4 text-yellow-300">Selamat Datang ke Kuiz Pemakanan!</h2>
+            <p class="text-purple-200 mb-6 text-lg">Uji pengetahuan anda tentang pemakanan seimbang, makronutrien, mikronutrien dan amalan pemakanan sihat!</p>
+            <div class="bg-purple-900/60 p-4 rounded-xl mb-6 text-left text-sm space-y-2 border border-purple-700">
+                <p> Total Soalan: <strong>28 Soalan</strong></p>
+                <p> Formasi: Pilihan Ganda, Betul/Salah, Soalan Pendek & Situasi</p>
+            </div>
+            <button onclick="startQuiz()" class="w-full bg-yellow-400 hover:bg-yellow-300 text-purple-950 font-extrabold text-2xl py-4 rounded-xl shadow-lg transform transition active:scale-95">
+                MULA KUIZ! <i class="fa-solid fa-play ml-2"></i>
+            </button>
+        </div>
+
+        <!-- Question Screen -->
+        <div id="quiz-screen" class="hidden max-w-4xl w-full flex flex-col justify-between min-h-[500px]">
+            
+            <!-- Progress Bar & Question Counter -->
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <span id="section-badge" class="bg-yellow-400 text-purple-950 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                        Bahagian A
+                    </span>
+                    <span id="question-count" class="text-purple-200 text-sm font-semibold">Soalan 1 dari 28</span>
+                </div>
+                <div class="w-full bg-purple-950 h-3 rounded-full overflow-hidden border border-purple-700">
+                    <div id="progress-bar" class="bg-yellow-400 h-full w-0 transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="bg-purple-800 p-6 md:p-8 rounded-2xl shadow-xl border-4 border-purple-600 mb-6 text-center flex-grow flex flex-col justify-center items-center">
+                <h2 id="question-text" class="text-xl md:text-2xl font-bold leading-relaxed text-white">
+                    Soalan akan dipaparkan di sini...
+                </h2>
+            </div>
+
+            <!-- Answer Options Section -->
+            <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Multiple choice / True-False buttons inserted dynamically -->
+            </div>
+
+            <!-- Short Answer / Situation Section -->
+            <div id="text-input-container" class="hidden flex flex-col space-y-4">
+                <textarea id="user-text-input" rows="3" placeholder="Taip jawapan anda di sini..." class="w-full p-4 rounded-xl bg-purple-950 text-white border-2 border-purple-600 focus:outline-none focus:border-yellow-400 text-lg"></textarea>
+                <button onclick="submitTextAnswer()" class="w-full bg-yellow-400 hover:bg-yellow-300 text-purple-950 font-bold py-3 rounded-xl shadow-lg transition">
+                    Hantar Jawapan <i class="fa-solid fa-paper-plane ml-2"></i>
+                </button>
+            </div>
+
+            <!-- Feedback Overlay / Modal -->
+            <div id="feedback-card" class="hidden fixed inset-0 bg-purple-950/90 flex items-center justify-center p-4 z-50">
+                <div class="bg-purple-800 p-6 rounded-2xl max-w-lg w-full text-center border-4 border-purple-600 shadow-2xl">
+                    <div id="feedback-icon" class="text-6xl mb-3"></div>
+                    <h3 id="feedback-title" class="text-2xl font-bold mb-2"></h3>
+                    <div id="feedback-detail" class="bg-purple-900 p-4 rounded-xl text-left mb-6 text-purple-200 text-sm md:text-base border border-purple-700">
+                    </div>
+                    <button onclick="nextQuestion()" class="w-full bg-yellow-400 hover:bg-yellow-300 text-purple-950 font-extrabold text-xl py-3 rounded-xl shadow-lg transition">
+                        Seterusnya <i class="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- End / Result Screen -->
+        <div id="result-screen" class="hidden bg-purple-800 p-8 rounded-2xl shadow-2xl max-w-xl w-full text-center border-4 border-purple-600">
+            <div class="text-6xl mb-4">🏆</div>
+            <h2 class="text-3xl font-bold mb-2 text-yellow-300">Tahniah! Kuiz Selesai!</h2>
+            <p class="text-purple-200 mb-6">Anda telah menyelesaikan semua soalan Pemakanan.</p>
+            
+            <div class="bg-purple-900 p-6 rounded-xl mb-6 border border-purple-700">
+                <p class="text-sm text-purple-300 mb-1">Jumlah Mata Pilihan Ganda & True/False:</p>
+                <p class="text-4xl font-extrabold text-yellow-400 mb-2" id="final-score">0 / 180</p>
+                <p class="text-xs text-purple-300 italic">*Soalan Subjektif & Situasi telah disemak secara kendiri/skor rujukan.</p>
+            </div>
+
+            <button onclick="restartQuiz()" class="w-full bg-yellow-400 hover:bg-yellow-300 text-purple-950 font-extrabold text-xl py-4 rounded-xl shadow-lg transition">
+                Cuba Lagi <i class="fa-solid fa-rotate-right ml-2"></i>
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="p-3 text-center text-xs text-purple-400 border-t border-purple-800 bg-purple-950">
+        Kuiz Interaktif Unit 2: Pemakanan | Reka Bentuk Gaya Kahoot / Quizizz
+    </footer>
+
+    <script>
+        const questions = [
+            // Bahagian A
+            {
+                section: "Bahagian A",
+                type: "mcq",
+                question: "1. Apakah maksud pemakanan seimbang?",
+                options: [
+                    { text: "Makan makanan yang banyak", isCorrect: false },
+                    { text: "Makan satu jenis makanan sahaja", isCorrect: false },
+                    { text: "Mengambil pelbagai nutrien dalam kuantiti yang sesuai", isCorrect: true },
+                    { text: "Makan makanan yang mahal", isCorrect: false }
+                ],
+                explanation: "Pemakanan seimbang bermaksud mengambil pelbagai jenis nutrien dalam kuantiti dan kadar yang sesuai dengan keperluan tubuh."
+            },
+            {
+                section: "Bahagian A",
+                type: "mcq",
+                question: "2. Antara berikut, yang manakah merupakan makronutrien?",
+                options: [
+                    { text: "Vitamin", isCorrect: false },
+                    { text: "Mineral", isCorrect: false },
+                    { text: "Karbohidrat", isCorrect: true },
+                    { text: "Air", isCorrect: false }
+                ],
+                explanation: "Karbohidrat, protein, dan lemak adalah contoh makronutrien (diperlukan dalam kuantiti besar)."
+            },
+            {
+                section: "Bahagian A",
+                type: "mcq",
+                question: "3. Apakah fungsi utama karbohidrat?",
+                options: [
+                    { text: "Membina tulang", isCorrect: false },
+                    { text: "Membekalkan tenaga", isCorrect: true },
+                    { text: "Membina sel darah merah", isCorrect: false },
+                    { text: "Melindungi mata", isCorrect: false }
+                ],
+                explanation: "Fungsi utama karbohidrat adalah membekalkan tenaga bagi membolehkan tubuh menjalankan aktiviti harian."
+            },
+            {
+                section: "Bahagian A",
+                type: "mcq",
+                question: "4. Antara berikut, yang manakah sumber karbohidrat?",
+                options: [
+                    { text: "Nasi", isCorrect: true },
+                    { text: "Telur", isCorrect: false },
+                    { text: "Ikan", isCorrect: false },
+                    { text: "Susu", isCorrect: false }
+                ],
+                explanation: "Nasi, roti, mi, dan ubi-ubian adalah contoh utama makanan kaya karbohidrat."
+            },
+            {
+                section: "Bahagian A",
+                type: "mcq",
+                question: "5. Apakah fungsi utama protein?",
+                options: [
+                    { text: "Memberikan warna kepada makanan", isCorrect: false },
+                    { text: "Membina dan membaiki sel badan", isCorrect: true },
+                    { text: "Menggantikan air dalam badan", isCorrect: false },
+                    { text: "Menurunkan suhu makanan", isCorrect: false }
+                ],
+                explanation: "Protein berfungsi untuk pembesaran serta membina dan membaiki tisu sel badan yang rosak."
+            },
+            {
+                section: "Bahagian A",
+                type: "mcq",
+                question: "6. Antara berikut, yang manakah makanan yang kaya dengan protein?",
+                options: [
+                    { text: "Telur", isCorrect: true },
+                    { text: "Gula-gula", isCorrect: false },
+                    { text: "Minyak", isCorrect: false },
+                    { text: "Air kosong", isCorrect: false }
+                ],
+                explanation: "Telur, ikan, daging, ayam, dan kekacang merupakan sumber protein yang kaya."
+            },
+            {
+                section: "Bahagian A",
+                type: "mcq",
+                question: "7. Lemak perlu diambil dalam kuantiti yang...",
+                options: [
+                    { text: "sangat banyak", isCorrect: false },
+                    { text: "sederhana", isCorrect: true },
+                    { text: "tidak terhad", isCorrect: false },
+                    { text: "langsung tidak boleh diambil", isCorrect: false }
+                ],
+                explanation: "Lemak masih diperlukan tubuh sebagai sumber tenaga dan pemanas badan, tetapi hendaklah diambil secara sederhana."
+            },
+            {
+                section: "Bahagian A",
+                type: "mcq",
+                question: "8. Vitamin dan mineral tergolong dalam...",
+                options: [
+                    { text: "Makronutrien", isCorrect: false },
+                    { text: "Mikronutrien", isCorrect: true },
+                    { text: "Karbohidrat", isCorrect: false },
+                    { text: "Protein", isCorrect: false }
+                ],
+                explanation: "Mikronutrien adalah nutrien yang diperlukan dalam kuantiti sedikit sahaja, seperti vitamin dan mineral."
+            },
+            {
+                section: "Bahagian A",
+                type: "mcq",
+                question: "9. Antara berikut, yang manakah merupakan sumber vitamin?",
+                options: [
+                    { text: "Buah-buahan", isCorrect: true },
+                    { text: "Minyak masak", isCorrect: false },
+                    { text: "Gula", isCorrect: false },
+                    { text: "Garam", isCorrect: false }
+                ],
+                explanation: "Buah-buahan dan sayur-sayuran kaya dengan pelbagai jenis vitamin dan mineral."
+            },
+            {
+                section: "Bahagian A",
+                type: "mcq",
+                question: "10. Apakah maksud “Jumlah sajian 6–11” bagi karbohidrat?",
+                options: [
+                    { text: "Perlu makan 11 pinggan nasi sehari", isCorrect: false },
+                    { text: "Perlu makan 6 jenis makanan sahaja", isCorrect: false },
+                    { text: "Cadangan mengambil sekitar 6–11 sajian daripada kumpulan karbohidrat sehari", isCorrect: true },
+                    { text: "Tidak boleh makan lebih daripada 6 kali sehari", isCorrect: false }
+                ],
+                explanation: "Ia merujuk kepada saranan kuantiti jumlah sajian bagi kumpulan karbohidrat dalam sehari mengikut Piramid Makanan."
+            },
+
+            // Bahagian B
+            {
+                section: "Bahagian B",
+                type: "tf",
+                question: "11. Karbohidrat membekalkan tenaga kepada badan.",
+                correctAnswer: true,
+                explanation: "Betul! Karbohidrat ialah sumber tenaga utama bagi badan manusia."
+            },
+            {
+                section: "Bahagian B",
+                type: "tf",
+                question: "12. Protein membantu membina dan membaiki sel badan.",
+                correctAnswer: true,
+                explanation: "Betul! Protein sangat diperlukan untuk pembentukan sel baru dan pembaikan tisu."
+            },
+            {
+                section: "Bahagian B",
+                type: "tf",
+                question: "13. Kita tidak boleh mengambil lemak langsung.",
+                correctAnswer: false,
+                explanation: "Salah! Lemak tetap diperlukan oleh badan dalam jumlah yang sedikit/sederhana."
+            },
+            {
+                section: "Bahagian B",
+                type: "tf",
+                question: "14. Sayur-sayuran dan buah-buahan merupakan sumber vitamin dan mineral.",
+                correctAnswer: true,
+                explanation: "Betul! Sayur dan buah kaya dengan mikro-nutrien untuk menjaga ketahanan badan."
+            },
+            {
+                section: "Bahagian B",
+                type: "tf",
+                question: "15. Kita boleh minum minuman manis sebanyak yang kita mahu.",
+                correctAnswer: false,
+                explanation: "Salah! Minuman manis mengandungi gula tinggi yang boleh membawa masalah kesihatan jika berlebihan."
+            },
+            {
+                section: "Bahagian B",
+                type: "tf",
+                question: "16. Air kosong penting untuk membantu badan berfungsi dengan baik.",
+                correctAnswer: true,
+                explanation: "Betul! Air mengawal suhu badan, mengelakkan dehidrasi dan melancarkan sistem penghadaman."
+            },
+            {
+                section: "Bahagian B",
+                type: "tf",
+                question: "17. Makan secara berlebihan merupakan salah satu tabiat pemakanan yang sihat.",
+                correctAnswer: false,
+                explanation: "Salah! Makan berlebihan boleh menyebabkan obesiti dan penyakit berkaitan."
+            },
+            {
+                section: "Bahagian B",
+                type: "tf",
+                question: "18. Pemakanan yang tidak seimbang boleh menyebabkan masalah kesihatan.",
+                correctAnswer: true,
+                explanation: "Betul! Pemakanan tidak seimbang membawa kepada malnutrisi, obesiti, atau penyakit kronik."
+            },
+
+            // Bahagian C
+            {
+                section: "Bahagian C",
+                type: "text",
+                question: "19. Nyatakan tiga jenis makronutrien.",
+                sampleAnswer: "Karbohidrat, Protein, Lemak",
+                explanation: "Jawapan Lengkap: Karbohidrat, Protein, dan Lemak."
+            },
+            {
+                section: "Bahagian C",
+                type: "text",
+                question: "20. Nyatakan dua jenis mikronutrien.",
+                sampleAnswer: "Vitamin, Mineral",
+                explanation: "Jawapan Lengkap: Vitamin dan Mineral."
+            },
+            {
+                section: "Bahagian C",
+                type: "text",
+                question: "21. Berikan dua fungsi karbohidrat.",
+                sampleAnswer: "Membekalkan tenaga kepada badan, membantu membekalkan tenaga untuk aktiviti harian.",
+                explanation: "Jawapan Lengkap: Membekalkan tenaga kepada badan dan menyokong aktiviti fizikal harian."
+            },
+            {
+                section: "Bahagian C",
+                type: "text",
+                question: "22. Berikan dua contoh makanan yang mengandungi protein.",
+                sampleAnswer: "Telur, Ikan (contoh lain: ayam, daging, susu, tauhu, kekacang)",
+                explanation: "Jawapan Cadangan: Telur, ikan, ayam, daging, atau kekacang."
+            },
+            {
+                section: "Bahagian C",
+                type: "text",
+                question: "23. Mengapakah kita perlu minum air kosong?",
+                sampleAnswer: "Mengelakkan dehidrasi, membantu badan berfungsi dengan baik, mengawal suhu badan.",
+                explanation: "Jawapan Cadangan: Mengelakkan dehidrasi, mengawal suhu badan, dan membantu organ berfungsi dengan cekap."
+            },
+            {
+                section: "Bahagian C",
+                type: "text",
+                question: "24. Apakah kesan pengambilan makanan yang terlalu banyak gula, garam dan lemak?",
+                sampleAnswer: "Meningkatkan risiko masalah kesihatan seperti obesiti, tekanan darah tinggi dan penyakit kronik.",
+                explanation: "Jawapan Cadangan: Boleh menyebabkan obesiti, tekanan darah tinggi, penyakit jantung, dan masalah kesihatan lain."
+            },
+            {
+                section: "Bahagian C",
+                type: "text",
+                question: "25. Nyatakan dua kesan pemakanan yang tidak seimbang.",
+                sampleAnswer: "Obesiti / berat badan berlebihan, Kekurangan zat makanan (mudah letih, pertumbuhan terganggu).",
+                explanation: "Jawapan Cadangan: Obesiti, kekurangan zat makanan (malnutrisi), atau badan menjadi lemah dan lekas letih."
+            },
+
+            // Bahagian D
+            {
+                section: "Bahagian D",
+                type: "text",
+                question: "26. Ali selalu makan burger, kentang goreng dan minum minuman manis. Dia jarang makan sayur dan buah.\n\nSoalan: Apakah masalah dalam tabiat pemakanan Ali?",
+                sampleAnswer: "Ali tidak mengamalkan pemakanan seimbang kerana mengambil terlalu banyak makanan tinggi gula, garam dan lemak serta kurang makan sayur dan buah.",
+                explanation: "Jawapan Cadangan: Tabiat Ali tidak seimbang kerana tinggi gula, garam, lemak serta kurang vitamin & serat daripada buah/sayur."
+            },
+            {
+                section: "Bahagian D",
+                type: "text",
+                question: "27. Siti selalu berasa letih dan tidak bertenaga kerana dia tidak makan makanan yang mencukupi.\n\nSoalan: Apakah kemungkinan yang berlaku kepada Siti?",
+                sampleAnswer: "Siti mungkin tidak mendapat tenaga dan nutrien yang mencukupi untuk keperluan tubuh.",
+                explanation: "Jawapan Cadangan: Siti mengalami kekurangan tenaga/nutrien (malnutrisi) yang diperlukan untuk sistem badannya berfungsi."
+            },
+            {
+                section: "Bahagian D",
+                type: "text",
+                question: "28. Ahmad makan nasi, ikan, sayur dan buah dalam satu hidangan.\n\nSoalan: Adakah pemakanan Ahmad lebih seimbang? Mengapa?",
+                sampleAnswer: "Ya, kerana hidangan tersebut mengandungi pelbagai kumpulan makanan dan membekalkan nutrien lengkap yang diperlukan badan.",
+                explanation: "Jawapan Cadangan: Ya, kerana pelbagai kumpulan makanan (Karbohidrat, Protein, Vitamin, Mineral) ada dalam satu hidangan."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        const kahootColors = ['kahoot-red', 'kahoot-blue', 'kahoot-yellow', 'kahoot-green'];
+        const kahootShapes = ['fa-shapes', 'fa-circle', 'fa-square', 'fa-star'];
+
+        function startQuiz() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            document.getElementById('score-display').classList.remove('hidden');
+            currentQuestionIndex = 0;
+            score = 0;
+            updateScoreDisplay();
+            showQuestion();
+        }
+
+        function updateScoreDisplay() {
+            document.getElementById('current-score').innerText = score;
+        }
+
+        function showQuestion() {
+            const q = questions[currentQuestionIndex];
+            
+            // Progress & Section Badge
+            document.getElementById('section-badge').innerText = q.section;
+            document.getElementById('question-count').innerText = `Soalan ${currentQuestionIndex + 1} dari ${questions.length}`;
+            const progressPct = ((currentQuestionIndex + 1) / questions.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progressPct}%`;
+
+            // Question Text
+            document.getElementById('question-text').innerText = q.question;
+
+            // Reset Containers
+            const optionsContainer = document.getElementById('options-container');
+            const textInputContainer = document.getElementById('text-input-container');
+            optionsContainer.innerHTML = '';
+            optionsContainer.classList.add('hidden');
+            textInputContainer.classList.add('hidden');
+
+            if (q.type === 'mcq') {
+                optionsContainer.classList.remove('hidden');
+                q.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = `${kahootColors[idx % 4]} text-white text-lg font-bold p-5 rounded-2xl shadow-lg flex items-center justify-start space-x-4 transition transform active:scale-95 text-left w-full`;
+                    btn.innerHTML = `
+                        <span class="bg-white/20 p-2 rounded-lg"><i class="fa-solid ${kahootShapes[idx % 4]} text-xl"></i></span>
+                        <span>${opt.text}</span>
+                    `;
+                    btn.onclick = () => checkMCQAnswer(opt.isCorrect, q.explanation);
+                    optionsContainer.appendChild(btn);
+                });
+            } else if (q.type === 'tf') {
+                optionsContainer.classList.remove('hidden');
+                
+                const btnTrue = document.createElement('button');
+                btnTrue.className = `kahoot-blue text-white text-xl font-bold p-6 rounded-2xl shadow-lg flex items-center justify-center space-x-3 transition transform active:scale-95`;
+                btnTrue.innerHTML = `<i class="fa-solid fa-check text-2xl"></i> <span>BETUL ✅</span>`;
+                btnTrue.onclick = () => checkTFAnswer(true, q.correctAnswer, q.explanation);
+
+                const btnFalse = document.createElement('button');
+                btnFalse.className = `kahoot-red text-white text-xl font-bold p-6 rounded-2xl shadow-lg flex items-center justify-center space-x-3 transition transform active:scale-95`;
+                btnFalse.innerHTML = `<i class="fa-solid fa-xmark text-2xl"></i> <span>SALAH ❌</span>`;
+                btnFalse.onclick = () => checkTFAnswer(false, q.correctAnswer, q.explanation);
+
+                optionsContainer.appendChild(btnTrue);
+                optionsContainer.appendChild(btnFalse);
+            } else if (q.type === 'text') {
+                textInputContainer.classList.remove('hidden');
+                document.getElementById('user-text-input').value = '';
+            }
+        }
+
+        function checkMCQAnswer(isCorrect, explanation) {
+            if (isCorrect) {
+                score += 10;
+                updateScoreDisplay();
+                showFeedback(true, "JAWAPAN BETUL!", explanation);
+            } else {
+                showFeedback(false, "JAWAPAN KURANG TEPAT", explanation);
+            }
+        }
+
+        function checkTFAnswer(userAnswer, correctAnswer, explanation) {
+            if (userAnswer === correctAnswer) {
+                score += 10;
+                updateScoreDisplay();
+                showFeedback(true, "JAWAPAN BETUL!", explanation);
+            } else {
+                showFeedback(false, "JAWAPAN KURANG TEPAT", explanation);
+            }
+        }
+
+        function submitTextAnswer() {
+            const userInput = document.getElementById('user-text-input').value.trim();
+            const q = questions[currentQuestionIndex];
+            
+            let detailHTML = `
+                <p class="font-bold mb-1 text-yellow-300">Jawapan Anda:</p>
+                <p class="mb-3 italic bg-purple-950 p-2 rounded border border-purple-800">${userInput ? userInput : "(Tiada jawapan ditaip)"}</p>
+                <p class="font-bold mb-1 text-green-400">Cadangan Jawapan / Skema:</p>
+                <p class="mb-2 font-semibold text-white">${q.sampleAnswer}</p>
+                <hr class="border-purple-700 my-2">
+                <p class="text-xs text-purple-300">${q.explanation}</p>
+            `;
+
+            showFeedback(null, "SEMAKAN JAWAPAN", detailHTML, true);
+        }
+
+        function showFeedback(isCorrect, title, detail, isCustomHTML = false) {
+            const card = document.getElementById('feedback-card');
+            const icon = document.getElementById('feedback-icon');
+            const titleEl = document.getElementById('feedback-title');
+            const detailEl = document.getElementById('feedback-detail');
+
+            if (isCorrect === true) {
+                icon.innerHTML = '🎉';
+                titleEl.className = 'text-2xl font-bold mb-2 text-green-400';
+            } else if (isCorrect === false) {
+                icon.innerHTML = '😅';
+                titleEl.className = 'text-2xl font-bold mb-2 text-red-400';
+            } else {
+                icon.innerHTML = '💡';
+                titleEl.className = 'text-2xl font-bold mb-2 text-yellow-300';
+            }
+
+            titleEl.innerText = title;
+
+            if (isCustomHTML) {
+                detailEl.innerHTML = detail;
+            } else {
+                detailEl.innerHTML = `<p>${detail}</p>`;
+            }
+
+            card.classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            document.getElementById('feedback-card').classList.add('hidden');
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('final-score').innerText = `${score} / 180`;
+        }
+
+        function restartQuiz() {
+            document.getElementById('result-screen').classList.add('hidden');
+            startQuiz();
+        }
+    </script>
+</body>
+</html>
+```eof
+
+Aplikasi Kuiz Interaktif Pemakanan telah siap dibina dalam satu fail HTML di atas. Anda boleh membukanya dalam mana-mana pelayar web untuk terus mencuba kuiz ini!
